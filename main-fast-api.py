@@ -3,6 +3,10 @@ from pydantic import BaseModel
 from typing import Optional
 import csv
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from database_api import Movies, Links, Ratings, Tags
+
 app = FastAPI()
 
 #Użyłem biblioteki Pydantic, tak jak było w załączonym do lekcji poradniku zamiast __dict__
@@ -33,6 +37,10 @@ class Tag(BaseModel):
     timestamp: Optional[str] = None
 
 
+engine = create_engine("sqlite:///database.db", echo=True)
+SessionLocal = sessionmaker(bind=engine)
+
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
@@ -40,7 +48,8 @@ def read_root():
 
 @app.get("/links")
 def read_links():
-    links = []
+    # Stary kod
+    """links = []
     with open("links.csv", newline="") as csvfile:
         reader = csv.reader(csvfile)
         next(reader)
@@ -51,12 +60,20 @@ def read_links():
                 tmdbId=row[2]
             )
             links.append(link)
-    return links
+    return links"""
+    #Nowy kod po refaktoryzacji
+    db = SessionLocal()
+    try:
+        links = db.query(Links).all()
+        return links
+    finally:
+        db.close()
 
 
 @app.get("/movies")
 def read_movies():
-    movies = []
+
+    """movies = []
     with open("movies.csv", newline="") as csvfile:
         reader = csv.reader(csvfile)
         next(reader)
@@ -67,12 +84,19 @@ def read_movies():
                 genres=row[2]
             )
             movies.append(movie)
-    return movies
+    return movies"""
+
+    db = SessionLocal()
+    try:
+        movies = db.query(Movies).all()
+        return movies
+    finally:
+        db.close()
 
 
 @app.get("/ratings")
 def read_ratings():
-    ratings = []
+    """ratings = []
     with open("ratings.csv", newline="") as csvfile:
         reader = csv.reader(csvfile)
         next(reader)
@@ -84,12 +108,19 @@ def read_ratings():
                 timestamp=row[3]
             )
             ratings.append(rating)
-    return ratings
+    return ratings"""
+
+    db = SessionLocal()
+    try:
+        ratings = db.query(Ratings).all()
+        return ratings
+    finally:
+        db.close()
 
 
 @app.get("/tags")
 def read_tags():
-    tags = []
+    """tags = []
     with open("tags.csv", newline="") as csvfile:
         reader = csv.reader(csvfile)
         next(reader)
@@ -101,4 +132,11 @@ def read_tags():
                 timestamp=row[3]
             )
             tags.append(tag)
-    return tags
+    return tags"""
+
+    db = SessionLocal()
+    try:
+        tags = db.query(Tags).all()
+        return tags
+    finally:
+        db.close()
