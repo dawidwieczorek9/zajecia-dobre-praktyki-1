@@ -1,28 +1,24 @@
-import csv
-import os
-from filelock import FileLock
+import sqlite3
 
-FILE = "tasks.csv"
-LOCK = "tasks.csv.lock"
+FILE = 'tasks.db'
 
-def get_next_id():
-    if not os.path.exists(FILE):
-        return 1
-    with open(FILE, "r", newline="") as f:
-        rows = list(csv.reader(f))
-        if not rows:
-            return 1
-        return int(rows[-1][0]) + 1
 
-def main():
-    new_id = get_next_id()
+def create_table():
+    connection = sqlite3.connect(FILE)
+    connection.execute('CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, status TEXT, worker TEXT, started_at TEXT, finished_at TEXT)')
+    connection.commit()
+    connection.close()
 
-    with FileLock(LOCK):
-        with open(FILE, "a", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow([new_id, "pending"])
 
-    print("[Producer] Added task " + str(new_id))
+def add_task():
+    connection = sqlite3.connect(FILE)
+    connection.execute('INSERT INTO tasks (status, worker, started_at, finished_at) VALUES (?, ?, ?, ?)', ('pending', '', '', ''))
+    task_id = connection.execute('SELECT last_insert_rowid()').fetchone()[0]
+    connection.commit()
+    connection.close()
+    print("[Producer] Added task " + str(task_id))
 
-if __name__ == "__main__":
-    main()
+
+if __name__ == '__main__':
+    create_table()
+    add_task()
